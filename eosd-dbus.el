@@ -67,11 +67,11 @@ REASON: Reason for closing the notification client"
   (message "NotificationClosed: %s" id))
 
 
-(defun eosd-dbus-action-involved (id action-key)
+(defun eosd-dbus-action-invoked (id action-key)
   "Handle the signal `ActionInvoked'.
 
 ID: Identification of the notification emitting the action
-ACTION-KEY: The Key of the action involved"
+ACTION-KEY: The Key of the action invoked"
   (message "ActionInvoked: %s %s" id action-key))
 
 
@@ -101,7 +101,7 @@ ACTION-KEY: The Key of the action involved"
   (dbus-register-signal
    :session "org.freedesktop.Notifications"
    "/org/freedesktop/Notifications" "org.freedesktop.Notifications"
-   "ActionInvoked" 'eosd-dbus-action-involved))
+   "ActionInvoked" 'eosd-dbus-action-invoked))
 
 
 (defun eosd-dbus-stop ()
