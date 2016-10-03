@@ -1,0 +1,45 @@
+* Emacs On Screen Display
+
+I currently use Emacs as the engine that runs my window management
+system. The specific module is [[https://github.com/ch11ng/exwm/][EXWM]]. Although EXWM is amazing, it is
+beyond it's capabilities to manage Desktop Notifications. Being
+historically a Gnome Desktop user, I really missed them.
+
+This package teaches Emacs how to manage notifications received by
+other applications via a D-Bus service [[http://www.galago-project.org/specs/notification/0.9/index.html][standardized by the Free
+Desktop]] initiative.
+
+** Features
+
+   * [-] Central place to access all notifications received
+   * [ ] Filter notifications by time, application, and status
+   * [ ] Silence notifications based on custom patterns
+   * [ ] Persistent cache for notifications (they'll survive Emacs
+     restarts).
+   * [ ] Optional integration with Emacs Mode-line
+   * [ ] Optionally shows GTK+ balloons for messages
+
+** How to install
+
+   It's available on [[https://melpa.org/][melpa]] follow the instructions to [[https://melpa.org/#/getting-started][enable it]] and
+   then run =M-x package-install<RET>eosd=.
+
+** Requirements
+
+   Emacs OSD was tested with Emacs 24.5.1 but will probably work with
+   any version compiled with D-Bus.
+
+** Alternatives
+
+   * https://launchpad.net/notify-osd
+   * http://www.knopwob.org/dunst
+   * https://github.com/GNOME/notification-daemon
+
+** Modular Design
+
+   Emacs OSD is organized in three modules: D-Bus interface,
+   Notification Buffer, and UI.
+
+   The *Notification Buffer* is the abstraction that binds the UI to
+   the events received via D-Bus. It's also the place that filters are
+   applied.
