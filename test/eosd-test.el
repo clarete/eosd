@@ -19,21 +19,46 @@
 ;;
 ;;; Code:
 
+(require 'ert)
+(require 'cl)
+
 (when (require 'undercover nil t)
   (undercover "eosd*.el"))
 
-(require 'ert)
 (require 'eosd)
+(require 'eosd-cache)
 
+(ert-deftest eosd-new-notification ()
+  "Convert entries received from D-Bus to internal format."
+
+  (should
+   (equal
+    (eosd-cache-entry '(1234             ; id
+                        "my application" ; app-name
+                        0                ; replaces-id
+                        "icon"           ; icon
+                        "summary"        ; summary
+                        "body"           ; body
+                        '("a1" "a2")     ; actions
+                        nil              ; hints
+                        0))              ; expire-timeout
+    '((id             . 1234)
+      (app-name       . "my application")
+      (replaces-id    . 0)
+      (app-icon       . "icon")
+      (summary        . "summary")
+      (body           . "body")
+      (actions        . '("a1" "a2"))
+      (hints          . nil)
+      (expire-timeout . 0)))))
 
 (ert-deftest eosd-receive-notify ()
-  "The D-Bus client should feed the Cache with incoming notifications."
+  "D-Bus client feeds the cache with incoming notifications."
 
   ;; When a new notification is fired
   (eosd-dbus-notify
    "my application" 0 "icon" "summary"
-   "body" "actions" "hints" 0)
-
+   "body" "actions" nil 0)
   (eosd-dbus-notify
    "another app" 1 "another icon" "another summary"
    "another body" "other actions" "other hints" 2)
@@ -41,8 +66,11 @@
   ;; Then it should appear in the notification list
   (should
    (equal (eosd-cache-list)
-          '(("another app" 1 "another icon" "another summary" "another body"
-             "other actions" "other hints" 2)
-            ("my application" 0 "icon" "summary" "body" "actions" "hints" 0)))))
+          (list
+           (eosd-cache-entry '(1 "another app" 1 "another icon"
+                                 "another summary" "another body"
+                                 "other actions" "other hints" 2))
+           (eosd-cache-entry '(1 "my application" 0 "icon" "summary"
+                                 "body" "actions" nil 0))))))
 
 ;;; eosd-test.el ends here

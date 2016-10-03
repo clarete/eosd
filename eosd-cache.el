@@ -22,13 +22,26 @@
 (defvar eosd-notification-list nil
   "The list of notifications to display.")
 
+(defun eosd-cache-entry-id ()
+  "Generate a unique id for entries."
+  1);(random (expt 16 4)))
+
+(defun eosd-cache-entry (entry)
+  "Transforms ENTRY from list to an assoc list."
+  (pairlis
+   '(id app-name replaces-id app-icon summary body actions hints expire-timeout)
+   entry))
+
 (defun eosd-cache-list ()
   "List all notifications saved."
   eosd-notification-list)
 
-(defun eosd-cache-new-notification (notification)
-  "Save NOTIFICATION into EOSD's persistent cache."
-  (push notification eosd-notification-list))
+(defun eosd-cache-new-notification (fields)
+  "Transform FIELDS into a notification and save it into cache."
+  (let ((entry-id (eosd-cache-entry-id)))
+    (push (eosd-cache-entry (cons entry-id fields))
+          eosd-notification-list)
+    entry-id))
 
 (provide 'eosd-cache)
 ;;; eosd-cache.el ends here

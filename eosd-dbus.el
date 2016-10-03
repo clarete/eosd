@@ -49,9 +49,9 @@
  * HINTS: ?
  * EXPIRE-TIMEOUT: How long the message should be available for
      the user in the main view."
-  (eosd-cache-new-notification (list app-name replaces-id app-icon
-                                     summary body actions hints
-                                     expire-timeout)))
+  (eosd-cache-new-notification
+   (list app-name replaces-id app-icon summary body actions hints
+         expire-timeout)))
 
 
 (defun eosd-dbus-close-notification (id)
