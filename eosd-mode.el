@@ -1,4 +1,4 @@
-;;; eosd-mode.el --- UI code to display notifications already received
+;;; eosd-mode.el --- UI code to display notifications received ; -*- lexical-binding: t; -*-
 ;;
 ;;; Commentary:
 ;;
@@ -82,13 +82,13 @@
 
 (defun eosd-mode-link (text face &rest key func arg)
   "Insert link showing TEXT with FACE, activated by KEY and execute FUNC passing ARG."
-  (lexical-let ((map (make-sparse-keymap))
-                (key key)
-                (func func)
-                (arg arg))
-    (if key
-        (define-key map (kbd "<RET>")
-          #'(lambda (e) (interactive key) (apply func arg))))
+  (let ((map (make-sparse-keymap))
+        (key key)
+        (func func)
+        (arg arg))
+    (unless (not (and key func))
+      (define-key map (kbd "<RET>")
+        #'(lambda (e) (interactive key) (apply func arg))))
     (insert (propertize text 'face face 'keymap map))))
 
 (defun eosd-mode-parse-icon (icon)
