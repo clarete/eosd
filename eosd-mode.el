@@ -191,8 +191,8 @@
   (run-hooks 'eosd-mode-section-hook))
 
 (defun eosd-mode-get-or-create-buffer ()
-  "Get or Create special *EOSD* buffer."
-  (let* ((buf-name "*EOSD*")
+  "Get or Create special EOSD buffer."
+  (let* ((buf-name "*notifications*")
          (buf (get-buffer buf-name)))
     (if buf
         (with-current-buffer buf
