@@ -43,7 +43,7 @@
 (defun eosd ()
   "Create or Open + Refresh special *EOSD* buffer."
   (interactive)
-  (eosd-mode-get-or-create-buffer))
+  (eosd-mode-create-or-update-buffer))
 
 (provide 'eosd)
 ;;; eosd.el ends here

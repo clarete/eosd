@@ -159,7 +159,7 @@
   "Prepare ground for the `EOSD' buffer."
   (buffer-disable-undo)
   (setq truncate-lines t)
-  (setq buffer-read-only nil)
+  (setq buffer-read-only t)
   (setq-local line-move-visual t)
   (setq show-trailing-whitespace nil)
   (hack-dir-local-variables-non-file-buffer)
@@ -173,7 +173,7 @@
 
 (defun eosd-mode-title ()
   "Generate title for EOSD buffer."
-  (let ((l (length eosd-notification-list)))
+  (let ((l (length (eosd-cache-list))))
     (format "%d Notification%s\n\n" l (if (eq l 1) "" "s"))))
 
 (defun eosd-mode-section-header ()
@@ -190,8 +190,8 @@
   (eosd-mode-setup)
   (run-hooks 'eosd-mode-section-hook))
 
-(defun eosd-mode-get-or-create-buffer ()
-  "Get or Create special EOSD buffer."
+(defun eosd-mode-create-or-update-buffer ()
+  "Update or Create special EOSD buffer."
   (let* ((buf-name "*notifications*")
          (buf (get-buffer buf-name)))
     (if buf
@@ -204,7 +204,8 @@
         (switch-to-buffer buf-name)
         (setq font-lock-mode nil)
         (use-local-map eosd-mode-map)
-        (eosd-mode)))))
+        (let ((inhibit-read-only t))
+          (eosd-mode))))))
 
 (provide 'eosd-mode)
 ;;; eosd-mode.el ends here
