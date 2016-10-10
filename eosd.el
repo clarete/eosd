@@ -1,6 +1,14 @@
 ;;; eosd.el --- Emacs Desktop Notification Daemon
 ;;
+;; Author: Lincoln Clarete <lincoln@clarete.li>
+;; URL: https://github.com/clarete/eosd.el
+;; Keywords: desktop, notification, osd
+;; Version: 0.0.1
+;; Package-Requires: ((emacs "24.4") (magit-popup "2.6.0") (json-mode "1.7.0"))
+;;
 ;;; Commentary:
+;;
+;; This file is NOT part of GNU Emacs.
 ;;
 ;; Copyright (C) 2016  Lincoln Clarete <lincoln@clarete.li>
 ;;
@@ -19,7 +27,10 @@
 ;;
 ;;; Code:
 
+;(add-to-list 'load-path "~/src/github.com/clarete/eosd/")
+
 (require 'eosd-dbus)
+(require 'eosd-mode)
 
 (defun eosd-start ()
   "Register EOSD service."
@@ -28,6 +39,11 @@
 (defun eosd-stop ()
   "Unregister EOSD service."
   (eosd-dbus-stop))
+
+(defun eosd ()
+  "Create or Open + Refresh special *EOSD* buffer."
+  (interactive)
+  (eosd-mode-get-or-create-buffer))
 
 (provide 'eosd)
 ;;; eosd.el ends here
