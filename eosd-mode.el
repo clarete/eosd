@@ -49,8 +49,7 @@
 (defvar eosd-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'bury-buffer)
-    ;; (define-key map (kbd "n") 'eosd-ui-next-item)
-    ;; (define-key map (kbd "p") 'eosd-ui-previous-item)
+    (define-key map (kbd "g") 'eosd-mode-create-or-update-buffer)
     map)
   "The keymap to use with `eosd-mode'.")
 
@@ -127,11 +126,21 @@
   (message "notification deleted"))
 
 (defun eosd-mode-render-body (notification)
-  "Render body field of NOTIFICATION."
+  "Render `body' field of NOTIFICATION.
+
+The text will be rendered along with the actions a notification
+may present to the user.  Check `eosd-mode-render-actions' to see
+which callbacks are associated with printable text.
+
+The `shr' library will be used to render simple HTML in order to
+support `body-hyperlinks'.  Blank lines are trimmed from text
+after rendered as HTML."
   (let ((start (point))
 	(_ (insert (cdr (assoc 'body notification)))))
     (shr-render-region start (point))
-    (goto-char (- (point) 1))
+    (while (eq (preceding-char) ?\n)
+      (goto-char (- (point) 1)))
+    (insert ?\n)
     (eosd-mode-render-actions notification)
     (save-excursion
       (save-restriction
@@ -145,8 +154,7 @@
   (when eosd-mode-enable-icon
     (eosd-mode-render-app-icon notification))
   (eosd-mode-link
-   (cdr (assoc 'summary notification))
-   'eosd-title-face "" nil nil)
+   (cdr (assoc 'summary notification)) 'eosd-title-face)
   (eosd-mode-render-body notification)
   (insert ?\n))
 
