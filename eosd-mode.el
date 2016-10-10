@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'eosd-cache)
-(require 'magit-popup)
 (require 'shr)
 
 (defface eosd-heading-face
@@ -59,6 +58,16 @@
   "Emacs Desktop Notifications."
   :group 'eosd-mode)
 
+(defcustom eosd-mode-enable-icon nil
+  "EOSD will render notification icons if this value is not nil."
+  :group 'eosd-mode
+  :type 'boolean)
+
+(defcustom eosd-mode-notification-indent 4
+  "How spaces should be used to indent a notification message."
+  :group 'eosd-mode
+  :type 'integer)
+
 (defcustom eosd-mode-hook nil
   "Hook run after entering eosd-mode."
   :group 'eosd-mode
@@ -70,11 +79,6 @@
   "Hooks for building the UI in eosd-mode."
   :group 'eosd-mode
   :type 'hook)
-
-(magit-define-popup eosd-mode-popup
-  "Show Desktop Notifications in a popup buffer."
-  'eosd-mode
-  :actions  '((?S "Search" eosd-ui-search)))
 
 (defun eosd-mode-link (text face &rest key func arg)
   "Insert link showing TEXT with FACE, activated by KEY and execute FUNC passing ARG."
@@ -100,9 +104,10 @@
       (let ((hints (cdr (assoc 'hints notification))))
         (dolist (h hints)
           (pcase (car h)
-            (`"icon_data" nil)      ; TODO: Parse icon data in (cdr h)
-            (`"image-data" nil)     ; TODO: Parse icon data in (cdr h)
-            ))))))
+            (`"icon_data" (insert "   "))  ; TODO: Parse icon data in (cdr h)
+            (`"image-data" (insert "   ")) ; TODO: Parse icon data in (cdr h)
+            ))))
+    (insert " ")))
 
 (defun eosd-mode-render-actions (notification)
   "Render NOTIFICATION actions."
@@ -131,13 +136,14 @@
     (save-excursion
       (save-restriction
         (widen)
-        (indent-region start (point))
+        (indent-region start (point) eosd-mode-notification-indent)
         (goto-char start)
         (delete-blank-lines)))))
 
 (defun eosd-mode-render-notification (notification)
   "Render a single NOTIFICATION item."
-  ;; (eosd-mode-render-app-icon notification)
+  (when eosd-mode-enable-icon
+    (eosd-mode-render-app-icon notification))
   (eosd-mode-link
    (cdr (assoc 'summary notification))
    'eosd-title-face "" nil nil)
