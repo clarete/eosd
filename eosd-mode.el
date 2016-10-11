@@ -149,17 +149,33 @@ after rendered as HTML."
         (goto-char start)
         (delete-blank-lines)))))
 
+(defun eosd-mode-render-title (notification)
+  "Render the title of NOTIFICATION.
+
+Customize `eosd-title-face' to change the font configuration for
+the title."
+  (eosd-mode-link
+   (cdr (assoc 'summary notification))
+   'eosd-title-face))
+
 (defun eosd-mode-render-notification (notification)
-  "Render a single NOTIFICATION item."
+  "Render a single NOTIFICATION item.
+
+A NOTIFICATION is rendered into three diferent parts: An icon, a
+title, and some content.  The title is usually the only item that
+is always present.  The application may not send any icon
+information for example.
+
+The rendering of the icon can be enabled or disabled through the
+variable `eosd-mode-enable-icon'."
   (when eosd-mode-enable-icon
     (eosd-mode-render-app-icon notification))
-  (eosd-mode-link
-   (cdr (assoc 'summary notification)) 'eosd-title-face)
+  (eosd-mode-render-title notification)
   (eosd-mode-render-body notification)
   (insert ?\n))
 
 (defun eosd-mode-render-notification-list (notifications)
-  "Render all NOTIFICATIONS each one in a different line."
+  "Render each item in the NOTIFICATIONS list."
   (dolist (notification notifications)
     (eosd-mode-render-notification notification)))
 
@@ -179,18 +195,23 @@ after rendered as HTML."
   (when (fboundp 'linum-mode)
     (linum-mode -1)))
 
-(defun eosd-mode-title ()
-  "Generate title for EOSD buffer."
+(defun eosd-mode-heading-string ()
+  "Generate the text for the header of the EOSD buffer."
   (let ((l (length (eosd-cache-list))))
     (format "%d Notification%s\n\n" l (if (eq l 1) "" "s"))))
 
 (defun eosd-mode-section-header ()
-  "Insert header in EOSD the buffer."
-  (insert (propertize (eosd-mode-title) 'face 'eosd-heading-face)))
+  "Insert the header of the EOSD buffer.
+
+Customize the variable `eosd-heading-face' to change font
+settings of the header."
+  (insert
+   (propertize
+    (eosd-mode-heading-string) 'face 'eosd-heading-face)))
 
 (defun eosd-mode-section-notifications ()
-  "Insert notifications in the EOSD buffer."
-  (eosd-mode-render-notification-list eosd-notification-list))
+  "Insert notifications from the cache in the EOSD buffer."
+  (eosd-mode-render-notification-list (eosd-cache-list)))
 
 (define-derived-mode eosd-mode special-mode "Desktop Notifications"
   "Major mode for displaying Desktop Notifications."
@@ -200,6 +221,7 @@ after rendered as HTML."
 
 (defun eosd-mode-create-or-update-buffer ()
   "Update or Create special EOSD buffer."
+  (interactive)
   (let* ((buf-name "*notifications*")
          (buf (get-buffer buf-name)))
     (if buf
