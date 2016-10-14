@@ -56,6 +56,8 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'bury-buffer)
     (define-key map (kbd "g") 'eosd-mode-create-or-update-buffer)
+    (define-key map (kbd "n") 'eosd-mode-next-notification)
+    (define-key map (kbd "p") 'eosd-mode-previous-notification)
     map)
   "The keymap to use with `eosd-mode'.")
 
@@ -162,6 +164,34 @@ after rendered as HTML."
         (goto-char start)
         (delete-blank-lines)))))
 
+(defun eosd-mode-next-notification ()
+  "Go to the next notification."
+  (interactive)
+  (when (re-search-forward
+         (format "%s\n\#"
+                 (eosd-mode-notification-mark-str "end"))
+         (point-max) t)
+    (goto-char (+ (point) 1))))
+
+(defun eosd-mode-previous-notification ()
+  "Go to the previous notification."
+  (interactive)
+  (re-search-backward "^" (point-min) t)
+  (re-search-backward
+   (eosd-mode-notification-mark-str "begin")
+   (point-min) t))
+
+(defun eosd-mode-notification-mark-str (mark)
+  "Create string used as MARK to create sections."
+  (format "###--- %s:::" mark))
+
+(defun eosd-mode-notification-mark (mark)
+  "Insert invisible MARK."
+  (let ((pos (point))
+        (m (eosd-mode-notification-mark-str mark)))
+    (insert m)
+    (facemenu-set-invisible pos (+ pos (length m)))))
+
 (defun eosd-mode-find-second-format (s)
   "Find good format for S."
   (cond ((zerop s) "just now")
@@ -210,10 +240,12 @@ information for example.
 
 The rendering of the icon can be enabled or disabled through the
 variable `eosd-mode-enable-icon'."
+  (eosd-mode-notification-mark "begin")
   (when eosd-mode-enable-icon
     (eosd-mode-render-app-icon notification))
   (eosd-mode-render-title notification)
   (eosd-mode-render-body notification)
+  (eosd-mode-notification-mark "end")
   (insert ?\n))
 
 (defun eosd-mode-render-notification-list (notifications)
