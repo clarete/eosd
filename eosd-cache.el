@@ -19,18 +19,20 @@
 ;;
 ;;; Code:
 
+(eval-when-compile (require 'cl))
+
 (defvar eosd-notification-list nil
   "The list of notifications to display.")
 
+(defvar eosd-notification-fields
+  '(id timestamp app-name
+       replaces-id app-icon summary body actions hints
+       expire-timeout)
+  "Field names of a notification entry.")
+
 (defun eosd-cache-entry-id ()
   "Generate a unique id for entries."
-  1);(random (expt 16 4)))
-
-(defun eosd-cache-entry (entry)
-  "Transforms ENTRY from list to an assoc list."
-  (pairlis
-   '(id app-name replaces-id app-icon summary body actions hints expire-timeout)
-   entry))
+  (random (expt 16 4)))
 
 (defun eosd-cache-list ()
   "List all notifications saved."
@@ -38,8 +40,10 @@
 
 (defun eosd-cache-new-notification (fields)
   "Transform FIELDS into a notification and save it into cache."
-  (let ((entry-id (eosd-cache-entry-id)))
-    (push (eosd-cache-entry (cons entry-id fields))
+  (let ((entry-id (eosd-cache-entry-id))
+        (time (float-time)))
+    (push (cl-pairlis eosd-notification-fields
+                      (cons entry-id (cons time fields)))
           eosd-notification-list)
     entry-id))
 

@@ -34,6 +34,12 @@
   "Face for notification titles."
   :group 'eosd-faces)
 
+(defface eosd-datetime-face
+  '((((class color) (background dark)) :foreground "#5180b3")
+    (t (:foreground "blue")))
+  "Face for notification date-time."
+  :group 'eosd-faces)
+
 (defface eosd-action-link-face
   '((((class color) (background dark)) :foreground "cornsilk4")
     (t (:foreground "yellow")))
@@ -61,6 +67,13 @@
   "EOSD will render notification icons if this value is not nil."
   :group 'eosd-mode
   :type 'boolean)
+
+(defcustom eosd-mode-datetime-format nil
+  "Date-Time format for rendering dates.
+
+If set to nil, it will show approximate time."
+  :group 'eosd-mode
+  :type 'string)
 
 (defcustom eosd-mode-notification-indent 4
   "How spaces should be used to indent a notification message."
@@ -149,19 +162,48 @@ after rendered as HTML."
         (goto-char start)
         (delete-blank-lines)))))
 
+(defun eosd-mode-find-second-format (s)
+  "Find good format for S."
+  (cond ((zerop s) "just now")
+        ((<= s 19) (format "%ds" s))
+        ((and (> s 19) (< s 40)) "half a minute")
+        ((< s 59) "~1m")
+        (t "1m")))
+
+(defun eosd-mode-distance-from-current-time (timestamp)
+  "TIMESTAMP."
+  (let* ((current (float-time))
+         (minutes (fround (/ (- current timestamp) 60.0)))
+         (seconds (fround (- current timestamp))))
+    (cond ((<= minutes 1)
+           (eosd-mode-find-second-format seconds))
+          ((and (> minutes 1) (< minutes 45))
+           (format "%dm" minutes))
+          ((and (> minutes 90) (< minutes 14401))
+           (format "%dh" (fround (/ minutes 60))))
+          (t "a while ago"))))
+
 (defun eosd-mode-render-title (notification)
   "Render the title of NOTIFICATION.
 
-Customize `eosd-title-face' to change the font configuration for
-the title."
+Customize `eosd-title-face' and `eosd-datetime-face' to change
+the font configuration for the title and date-time respectively.
+
+Edit `eosd-mode-datetime-format' for customizing the date-time
+format."
   (eosd-mode-link
    (cdr (assoc 'summary notification))
-   'eosd-title-face))
+   'eosd-title-face)
+  (let* ((timestamp (cdr (assoc 'timestamp notification)))
+         (printable (if eosd-mode-datetime-format
+                        (format-time-string eosd-mode-datetime-format timestamp)
+                      (eosd-mode-distance-from-current-time timestamp))))
+    (eosd-mode-link (format " ⋅ %s" printable) 'eosd-datetime-face)))
 
 (defun eosd-mode-render-notification (notification)
   "Render a single NOTIFICATION item.
 
-A NOTIFICATION is rendered into three diferent parts: An icon, a
+A NOTIFICATION is rendered into three different parts: An icon, a
 title, and some content.  The title is usually the only item that
 is always present.  The application may not send any icon
 information for example.
@@ -177,7 +219,8 @@ variable `eosd-mode-enable-icon'."
 (defun eosd-mode-render-notification-list (notifications)
   "Render each item in the NOTIFICATIONS list."
   (dolist (notification notifications)
-    (eosd-mode-render-notification notification)))
+    (eosd-mode-render-notification notification))
+  (goto-char 0))
 
 (defun eosd-mode-setup ()
   "Prepare ground for the `EOSD' buffer."
@@ -239,3 +282,5 @@ settings of the header."
 
 (provide 'eosd-mode)
 ;;; eosd-mode.el ends here
+
+;;  LocalWords:  TIMESTAMP
