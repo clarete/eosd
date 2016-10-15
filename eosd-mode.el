@@ -201,7 +201,13 @@ after rendered as HTML."
         (t "1m")))
 
 (defun eosd-mode-distance-from-current-time (timestamp)
-  "TIMESTAMP."
+  "How much time past since TIMESTAMP in text.
+
+ *   1m <= X: calls `eosd-mode-find-second-format'
+ *   1m >  X > 45m:  Xm
+ *  45m >= X > 90m:  about 1h
+ *  90m >= X > 240h: Xh
+ * 240h >= X:        a while ago"
   (let* ((current (float-time))
          (minutes (fround (/ (- current timestamp) 60.0)))
          (seconds (fround (- current timestamp))))
@@ -209,7 +215,9 @@ after rendered as HTML."
            (eosd-mode-find-second-format seconds))
           ((and (> minutes 1) (< minutes 45))
            (format "%dm" minutes))
-          ((and (> minutes 90) (< minutes 14401))
+          ((and (>= minutes 45) (< minutes 90))
+           "about 1h")
+          ((and (>= minutes 90) (< minutes 14401))
            (format "%dh" (fround (/ minutes 60))))
           (t "a while ago"))))
 
