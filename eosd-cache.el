@@ -47,5 +47,12 @@
           eosd-notification-list)
     entry-id))
 
+(defun eosd-cache-delete-notification (notification-id)
+  "Delete NOTIFICATION-ID from the cache."
+  (setq eosd-notification-list
+        (delq (assoc (cons 'id notification-id)
+                     eosd-notification-list)
+              eosd-notification-list)))
+
 (provide 'eosd-cache)
 ;;; eosd-cache.el ends here

@@ -124,25 +124,50 @@ arguments."
     (insert (propertize text 'face face 'keymap map))))
 
 (defmacro eosd-mode-notification-find-boundaries (body)
-  "Find where notification begins and ends and pass that to BODY."
+  "Capture notification under cursor and pass it to BODY.
+
+Any function that needs to use this functionality can start with
+something like this:
+
+  (eosd-mode-notification-find-boundaries
+   #'(lambda (notification-id begin end)
+      (message \"N:%d B:%s E:%s\" notification-id begin end)))
+
+The notification ID is retrieved from a hidden text that is
+inserted right before the text marker.
+
+The visibility of the text marker is configurable whereas the id
+visibility isn't."
+
   `(save-excursion
      (end-of-line)
-     (when (re-search-backward (eosd-mode-mark "^%s.*$") nil t 1)
-       (forward-line)
-       (let* ((begin (point))
-              (_ (forward-line))
-              (end-point (or (re-search-forward
-                        (eosd-mode-mark "^%s") nil t 1)
-                             (point-max)))
-              (end (- end-point 1))
-              (inhibit-read-only t))
-         (funcall ,body begin end)))))
+     (when (re-search-backward (eosd-mode-mark "^[0-9]+%s.*") nil t 1)
+       ;; Retrieve notification id hidden in text before the text
+       ;; mark.  It will also be fed into the BODY function.
+       (beginning-of-line)
+       (mark-word)
+       (let ((notification-id (string-to-number
+                               (buffer-substring (mark) (point)))))
+         (forward-line)
+         (let* ((begin (point))
+                (_ (forward-line))
+                (end-point (re-search-forward
+                            (eosd-mode-mark "^[0-9]+%s") nil t 1))
+                (_ (beginning-of-line))
+                (end (if end-point (point) (point-max)))
+                (inhibit-read-only t))
+           (funcall ,body notification-id begin end))))))
 
 (defun eosd-mode-delete-notification-under-cursor ()
   "Delete notification under cursor."
   (interactive)
   (eosd-mode-notification-find-boundaries
-   #'(lambda (a b) (message "hi: %s,%s" a b))))
+   #'(lambda (notification-id begin end)
+       (re-search-backward (eosd-mode-mark "^[0-9]+%s.*$") nil t 1)
+       (beginning-of-line)
+       (delete-region (point) end)
+       (eosd-cache-delete-notification notification-id)))
+  (eosd-mode-next-notification))
 
 (defun eosd-mode-mark (fmt)
   "Return `FMT' filled in with configured text mark.
@@ -155,7 +180,7 @@ To change the configured text mark, refer to the variable
   "Toggle visibility of the current notification's body."
   (interactive)
   (eosd-mode-notification-find-boundaries
-   #'(lambda (begin end)
+   #'(lambda (notification-id begin end)
        (if (get-text-property begin 'invisible)
            (facemenu-remove-special begin end)
          (facemenu-set-invisible begin end)))))
@@ -163,13 +188,13 @@ To change the configured text mark, refer to the variable
 (defun eosd-mode-next-notification ()
   "Go to the next notification."
   (interactive)
-  (re-search-forward (eosd-mode-mark "^%s") nil t 1))
+  (re-search-forward (eosd-mode-mark "^[0-9]+%s") nil t 1))
 
 (defun eosd-mode-previous-notification ()
   "Go to the previous notification."
   (interactive)
   (forward-line -1)
-  (re-search-backward (eosd-mode-mark "^%s") nil t 1)
+  (re-search-backward (eosd-mode-mark "^[0-9]+%s") nil t 1)
   (eosd-mode-next-notification))
 
 (defun eosd-mode-notification-mark (mark)
@@ -198,14 +223,12 @@ To change the configured text mark, refer to the variable
   "Render NOTIFICATION actions."
   (dolist (action (cdr (assoc 'actions notification)))
     (eosd-mode-link
-     (downcase action)
-     'eosd-action-link-face "d"
-     'message notification)
+     (downcase action) 'eosd-action-link-face "<RET>"
+     #'(lambda () (message "%s" notification)))
     (insert " ⋅ "))
   (eosd-mode-link
-   "delete" 'eosd-delete-link-face "d"
-   'eosd-mode-delete-notification
-   '((cdr (assoc 'id notification))))
+   "delete" 'eosd-delete-link-face "<RET>"
+   'eosd-mode-delete-notification-under-cursor)
   (insert ?\n))
 
 (defun eosd-mode-render-body (notification)
@@ -261,6 +284,13 @@ after rendered as HTML."
            (format "%dh" (fround (/ minutes 60))))
           (t "a while ago"))))
 
+(defun eosd-mode-notification-id (notification)
+  "Insert id of NOTIFICATION as an invisible text."
+  (let* ((begin (point))
+         (id (cdr (assoc 'id notification))))
+    (insert (number-to-string id))
+    (facemenu-set-invisible begin (point))))
+
 (defun eosd-mode-render-title (notification)
   "Render the title of NOTIFICATION.
 
@@ -288,6 +318,7 @@ information for example.
 
 The rendering of the icon can be enabled or disabled through the
 variable `eosd-mode-enable-icon'."
+  (eosd-mode-notification-id notification)
   (eosd-mode-notification-mark "begin")
   (when eosd-mode-enable-icon
     (eosd-mode-render-app-icon notification))
