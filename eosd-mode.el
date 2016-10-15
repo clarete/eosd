@@ -154,7 +154,7 @@ after rendered as HTML."
 	(_ (insert (cdr (assoc 'body notification)))))
     (shr-render-region start (point))
     (while (eq (preceding-char) ?\n)
-      (goto-char (- (point) 1)))
+      (delete-backward-char 1))
     (insert ?\n)
     (eosd-mode-render-actions notification)
     (save-excursion
