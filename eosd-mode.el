@@ -52,12 +52,18 @@
   "Face used for links to delete notifications."
   :group 'eosd-faces)
 
+(defface eosd-text-mark-face
+  '((t (:height 1)))
+  "Face for section headings."
+  :group 'eosd-faces)
+
 (defvar eosd-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'bury-buffer)
     (define-key map (kbd "g") 'eosd-mode-create-or-update-buffer)
     (define-key map (kbd "n") 'eosd-mode-next-notification)
     (define-key map (kbd "p") 'eosd-mode-previous-notification)
+    (define-key map (kbd "i") 'eosd-mode-notification-body-toggle)
     map)
   "The keymap to use with `eosd-mode'.")
 
@@ -74,6 +80,14 @@
   "Date-Time format for rendering dates.
 
 If set to nil, it will show approximate time."
+  :group 'eosd-mode
+  :type 'string)
+
+(defcustom eosd-mode-notification-mark "¶"
+  "Character used as a text mark for each notification.
+
+The default font configuration makes this char invisible, but
+it can be changed through the variable `eosd-text-mark-face'"
   :group 'eosd-mode
   :type 'string)
 
@@ -164,33 +178,46 @@ after rendered as HTML."
         (goto-char start)
         (delete-blank-lines)))))
 
+(defun eosd-mode-mark (fmt)
+  "Return `FMT' filled in with configured text mark.
+
+To change the configured text mark, refer to the variable
+`eosd-mode-text-mark'."
+  (format fmt eosd-mode-text-mark))
+
+(defun eosd-mode-notification-body-toggle ()
+  "Toggle visibility of the current notification's body."
+  (interactive)
+  (save-excursion
+    (end-of-line)
+    (when (re-search-backward (eosd-mode-mark "^%s.*$") nil t 1)
+      (forward-line)
+      (let* ((begin (point))
+             (_ (forward-line))
+             (end (or (re-search-forward
+                       (eosd-mode-mark "^%s") nil t 1)
+                      (point-max)))
+             (inhibit-read-only t))
+        (if (get-text-property begin 'invisible)
+            (facemenu-remove-special begin end)
+          (facemenu-set-invisible begin end))))))
+
 (defun eosd-mode-next-notification ()
   "Go to the next notification."
   (interactive)
-  (when (re-search-forward
-         (format "%s\n\#"
-                 (eosd-mode-notification-mark-str "end"))
-         (point-max) t)
-    (goto-char (+ (point) 1))))
+  (re-search-forward (eosd-mode-mark "^%s") nil t 1))
 
 (defun eosd-mode-previous-notification ()
   "Go to the previous notification."
   (interactive)
-  (re-search-backward "^" (point-min) t)
-  (re-search-backward
-   (eosd-mode-notification-mark-str "begin")
-   (point-min) t))
-
-(defun eosd-mode-notification-mark-str (mark)
-  "Create string used as MARK to create sections."
-  (format "###--- %s:::" mark))
+  (forward-line -1)
+  (re-search-backward (eosd-mode-mark "^%s") nil t 1)
+  (beginning-of-line)
+  (eosd-mode-next-notification))
 
 (defun eosd-mode-notification-mark (mark)
   "Insert invisible MARK."
-  (let ((pos (point))
-        (m (eosd-mode-notification-mark-str mark)))
-    (insert m)
-    (facemenu-set-invisible pos (+ pos (length m)))))
+  (insert (propertize (eosd-mode-mark "%s") 'face 'eosd-text-mark-face)))
 
 (defun eosd-mode-find-second-format (s)
   "Find good format for S."
@@ -253,7 +280,6 @@ variable `eosd-mode-enable-icon'."
     (eosd-mode-render-app-icon notification))
   (eosd-mode-render-title notification)
   (eosd-mode-render-body notification)
-  (eosd-mode-notification-mark "end")
   (insert ?\n))
 
 (defun eosd-mode-render-notification-list (notifications)
