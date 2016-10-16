@@ -39,13 +39,16 @@
   eosd-notification-list)
 
 (defun eosd-cache-new-notification (fields)
-  "Transform FIELDS into a notification and save it into cache."
-  (let ((entry-id (eosd-cache-entry-id))
-        (time (float-time)))
-    (push (cl-pairlis eosd-notification-fields
-                      (cons entry-id (cons time fields)))
-          eosd-notification-list)
-    entry-id))
+  "Transform FIELDS into a notification and save it into cache.
+
+The return value will be the newly created notification."
+  (let* ((entry-id (eosd-cache-entry-id))
+         (time (float-time))
+         (notification (cl-pairlis
+                        eosd-notification-fields
+                        (cons entry-id (cons time fields)))))
+    (push notification eosd-notification-list)
+    notification))
 
 (defun eosd-cache-delete-notification (notification-id)
   "Delete NOTIFICATION-ID from the cache."

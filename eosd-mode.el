@@ -67,6 +67,9 @@
     map)
   "The keymap to use with `eosd-mode'.")
 
+(defvar eosd-buffer-name "*notifications*"
+  "Name of notifications buffer.")
+
 (defgroup eosd-mode nil
   "Emacs Desktop Notifications."
   :group 'eosd-mode)
@@ -332,6 +335,15 @@ variable `eosd-mode-enable-icon'."
     (eosd-mode-render-notification notification))
   (goto-char 0))
 
+(defun eosd-mode-notification-insert-if-buffer (notification)
+  "Insert NOTIFICATION if *notifications* buffer exists."
+  (eosd-mode-with-buffer
+   #'(lambda (b)
+       (goto-char 0)
+       (eosd-mode-next-notification)
+       (beginning-of-line)
+       (eosd-mode-render-notification notification))))
+
 (defun eosd-mode-setup ()
   "Prepare ground for the `EOSD' buffer."
   (buffer-disable-undo)
@@ -372,23 +384,29 @@ settings of the header."
   (eosd-mode-setup)
   (run-hooks 'eosd-mode-section-hook))
 
+(defmacro eosd-mode-with-buffer (body)
+  "BODY."
+  `(let ((buf (get-buffer eosd-buffer-name)))
+     (when buf
+       (with-current-buffer buf
+         (let ((inhibit-read-only t))
+           (funcall ,body buf)))
+       buf)))
+
 (defun eosd-mode-create-or-update-buffer ()
   "Update or Create special EOSD buffer."
   (interactive)
-  (let* ((buf-name "*notifications*")
-         (buf (get-buffer buf-name)))
-    (if buf
-        (with-current-buffer buf
-          (let ((inhibit-read-only t))
-            (erase-buffer)
-            (eosd-mode)
-            (switch-to-buffer buf)))
-      (with-output-to-temp-buffer buf-name
-        (switch-to-buffer buf-name)
+  (if (not (eosd-mode-with-buffer
+            #'(lambda (b)
+                (erase-buffer)
+                (eosd-mode)
+                (switch-to-buffer b))))
+      (with-output-to-temp-buffer eosd-buffer-name
+        (switch-to-buffer eosd-buffer-name)
         (setq font-lock-mode nil)
         (use-local-map eosd-mode-map)
         (let ((inhibit-read-only t))
-          (eosd-mode))))))
+          (eosd-mode)))))
 
 (provide 'eosd-mode)
 ;;; eosd-mode.el ends here
