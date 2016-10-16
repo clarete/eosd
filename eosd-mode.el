@@ -244,19 +244,14 @@ which callbacks are associated with printable text.
 The `shr' library will be used to render simple HTML in order to
 support `body-hyperlinks'.  Blank lines are trimmed from text
 after rendered as HTML."
+  (insert ?\n)
   (let ((start (point)))
-    (insert (cdr (assoc 'body notification)))
-    (shr-render-region start (point))
-    (while (eq (preceding-char) ?\n)
-      (delete-backward-char 1))
-    (insert ?\n)
+    (insert (cdr (assoc 'body notification)) ?\n)
+    (fill-region start (point))
     (eosd-mode-render-actions notification)
-    (save-excursion
-      (save-restriction
-        (widen)
-        (indent-region start (point) eosd-mode-notification-indent)
-        (goto-char start)
-        (delete-blank-lines)))))
+    (indent-region
+     start (point)
+     eosd-mode-notification-indent)))
 
 (defun eosd-mode-find-second-format (s)
   "Find good format for S."
