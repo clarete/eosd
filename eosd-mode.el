@@ -244,8 +244,8 @@ which callbacks are associated with printable text.
 The `shr' library will be used to render simple HTML in order to
 support `body-hyperlinks'.  Blank lines are trimmed from text
 after rendered as HTML."
-  (let ((start (point))
-	(_ (insert (cdr (assoc 'body notification)))))
+  (let ((start (point)))
+    (insert (cdr (assoc 'body notification)))
     (shr-render-region start (point))
     (while (eq (preceding-char) ?\n)
       (delete-backward-char 1))
@@ -340,8 +340,7 @@ variable `eosd-mode-enable-icon'."
   (eosd-mode-with-buffer
    #'(lambda (b)
        (goto-char 0)
-       (eosd-mode-next-notification)
-       (beginning-of-line)
+       (forward-line 2)
        (eosd-mode-render-notification notification))))
 
 (defun eosd-mode-setup ()
@@ -393,20 +392,24 @@ settings of the header."
            (funcall ,body buf)))
        buf)))
 
+(defun eosd-mode-create-buffer ()
+  "Create the *notifications* buffer."
+  (with-output-to-temp-buffer eosd-buffer-name
+    (switch-to-buffer eosd-buffer-name)
+    (setq font-lock-mode nil)
+    (use-local-map eosd-mode-map)
+    (let ((inhibit-read-only t))
+      (eosd-mode))))
+
 (defun eosd-mode-create-or-update-buffer ()
-  "Update or Create special EOSD buffer."
+  "Update or Create special *notifications* buffer."
   (interactive)
   (if (not (eosd-mode-with-buffer
             #'(lambda (b)
                 (erase-buffer)
                 (eosd-mode)
                 (switch-to-buffer b))))
-      (with-output-to-temp-buffer eosd-buffer-name
-        (switch-to-buffer eosd-buffer-name)
-        (setq font-lock-mode nil)
-        (use-local-map eosd-mode-map)
-        (let ((inhibit-read-only t))
-          (eosd-mode)))))
+      (eosd-mode-create-buffer)))
 
 (provide 'eosd-mode)
 ;;; eosd-mode.el ends here
