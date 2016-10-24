@@ -71,6 +71,9 @@
 (defvar eosd-buffer-name "*notifications*"
   "Name of notifications buffer.")
 
+(defvar eosd-mode-text-mark "⚫"
+  "Text mark that prefixes each notification.")
+
 (defgroup eosd-mode nil
   "Emacs Desktop Notifications."
   :group 'eosd-mode)
