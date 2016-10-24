@@ -64,6 +64,7 @@
     (define-key map (kbd "n") 'eosd-mode-next-notification)
     (define-key map (kbd "p") 'eosd-mode-previous-notification)
     (define-key map (kbd "i") 'eosd-mode-notification-body-toggle)
+    (define-key map (kbd "d") 'eosd-mode-delete-notification-under-cursor)
     map)
   "The keymap to use with `eosd-mode'.")
 
