@@ -65,6 +65,8 @@
     (define-key map (kbd "p") 'eosd-mode-previous-notification)
     (define-key map (kbd "i") 'eosd-mode-notification-body-toggle)
     (define-key map (kbd "d") 'eosd-mode-delete-notification-under-cursor)
+    (define-key map (kbd "<tab>") 'shr-next-link)
+    (define-key map (kbd "<backtab>") 'shr-previous-link)
     map)
   "The keymap to use with `eosd-mode'.")
 
@@ -128,7 +130,11 @@ arguments."
     (when (and key func)
       (define-key map (kbd key)
         #'(lambda (e) (interactive "p") (apply func arg))))
-    (insert (propertize text 'face face 'keymap map))))
+    (insert (propertize text
+                        'face face
+                        'keymap map
+                        'help-echo text
+                        'follow-link t))))
 
 (defmacro eosd-mode-notification-find-boundaries (body)
   "Capture notification under cursor and pass it to BODY.
