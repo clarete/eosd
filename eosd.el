@@ -34,10 +34,12 @@
 
 (defun eosd-start ()
   "Register EOSD service."
+  (interactive)
   (eosd-dbus-start))
 
 (defun eosd-stop ()
   "Unregister EOSD service."
+  (interactive)
   (eosd-dbus-stop))
 
 (defun eosd ()
