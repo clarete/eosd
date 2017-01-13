@@ -131,6 +131,7 @@ arguments."
       (define-key map (kbd key)
         #'(lambda (e) (interactive "p") (apply func arg))))
     (insert (propertize text
+                        'shr-url func
                         'face face
                         'keymap map
                         'help-echo text
