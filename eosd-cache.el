@@ -24,19 +24,46 @@
 (defvar eosd-notification-list nil
   "The list of notifications to display.")
 
-(defvar eosd-notification-fields
-  '(id timestamp app-name
-       replaces-id app-icon summary body actions hints
-       expire-timeout)
+(defvar eosd-notification-filter nil
+  "Expression applied to filter which notifications to show.")
+
+(defvar eosd-notification-fields '(id timestamp app-name
+  replaces-id app-icon summary body actions hints expire-timeout)
   "Field names of a notification entry.")
 
 (defun eosd-cache-entry-id ()
   "Generate a unique id for entries."
   (random (expt 16 4)))
 
+(defun eosd-cache-apply-filter (notification filter)
+  "Test if NOTIFICATION match with FILTER."
+  (let* ((operator (car filter))
+         (field (cadr filter))
+         (needed (caddr filter))
+         (content (cdr (assoc field notification))))
+    (if (apply (subst content field filter))
+        notification
+      nil)))
+
+(defun eosd-cache-apply-filters (notification)
+  "Apply all filters in NOTIFICATION."
+  (if (null eosd-notification-filter)
+      notification
+    (if (and (delq nil
+              (mapcar (lambda (filter)
+                        (eosd-cache-apply-filter notification filter))
+                      eosd-notification-filter)))
+        notification
+      nil)))
+
+(defun eosd-cache-filter (notifications)
+  "Filter NOTIFICATIONS list."
+  (delq nil
+   (mapcar 'eosd-cache-apply-filters notifications)))
+
 (defun eosd-cache-list ()
-  "List all notifications saved."
-  eosd-notification-list)
+  "Notifications filtered with expression in `eosd-notification-filter'."
+  (eosd-cache-filter eosd-notification-list))
 
 (defun eosd-cache-new-notification (fields)
   "Transform FIELDS into a notification and save it into cache.
