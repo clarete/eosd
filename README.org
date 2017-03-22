@@ -11,18 +11,19 @@ Desktop]] initiative.
 
 ** Features
 
-   * [-] Central place to access all notifications received
+   * [X] Central place to access all notifications received
    * [ ] Filter notifications by time, application, and status
    * [ ] Silence notifications based on custom patterns
    * [ ] Persistent cache for notifications (they'll survive Emacs
      restarts).
-   * [ ] Optional integration with Emacs Mode-line
+   * [ ] Optional integration with Emacs Mini-buffer
    * [ ] Optionally shows GTK+ balloons for messages
 
-** How to install
+#
+# ** How to install
 
-   It's available on [[https://melpa.org/][melpa]] follow the instructions to [[https://melpa.org/#/getting-started][enable it]] and
-   then run =M-x package-install<RET>eosd=.
+#    It's available on [[https://melpa.org/][melpa]] follow the instructions to [[https://melpa.org/#/getting-started][enable it]] and
+#    then run =M-x package-install<RET>eosd=.
 
 ** Requirements
 
