@@ -19,7 +19,6 @@ Desktop]] initiative.
    * [ ] Optional integration with Emacs Mini-buffer
    * [ ] Optionally shows GTK+ balloons for messages
 
-#
 # ** How to install
 
 #    It's available on [[https://melpa.org/][melpa]] follow the instructions to [[https://melpa.org/#/getting-started][enable it]] and
