@@ -19,8 +19,10 @@
 ;;
 ;;; Code:
 
-(require 'eosd-cache)
 (require 'shr)
+(require 'eosd-cache)
+(require 'eosd-pixbuf)
+
 
 (defface eosd-heading-face
   '((((class color) (background dark)) :foreground "dim gray")
@@ -215,10 +217,19 @@ To change the configured text mark, refer to the variable
   "Insert invisible MARK."
   (insert (propertize (eosd-mode-mark "%s") 'face 'eosd-text-mark-face)))
 
-(defun eosd-mode-parse-icon (icon)
-  "Parse ICON from `libnotify'."
-  (let ((data (string (nth 6 (nth 0 (nth 0 icon))))))
-    (create-image (mapcar #'byte-to-string data) 'xbm t)))
+(defun eosd-mode-parse-image-data (data)
+  "Parse image from within DATA.")
+
+(defun eosd-mode-parse-icon-data (data)
+  "Parse icon within DATA."
+  (cl-destructuring-bind (wi he rs alpha bps ch imgdata) data
+    (let* ((al (if alpha 1 0))
+           (w (min wi 32))
+           (h (min he 32))
+           (thedata0 (apply #'unibyte-string imgdata))
+           (thedata1 (eosd-pixbuf-to-png w h rs al bps thedata0))
+           (theimage (create-image thedata1 'png t)))
+      (insert-image theimage))))
 
 (defun eosd-mode-render-app-icon (notification)
   "Render application info inside of NOTIFICATION."
@@ -228,9 +239,8 @@ To change the configured text mark, refer to the variable
       (let ((hints (cdr (assoc 'hints notification))))
         (dolist (h hints)
           (pcase (car h)
-            (`"icon_data" (insert "   "))  ; TODO: Parse icon data in (cdr h)
-            (`"image-data" (insert "   ")) ; TODO: Parse icon data in (cdr h)
-            ))))
+            (`"icon_data" (eosd-mode-parse-icon-data (caadr h)))
+            (`"image-data"  (eosd-mode-parse-image-data (caadr h)))))))
     (insert " ")))
 
 (defun eosd-mode-render-actions (notification)
