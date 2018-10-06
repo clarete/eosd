@@ -7,6 +7,35 @@
 
 int plugin_is_GPL_compatible;
 
+
+/* Thanks to http://phst.github.io/emacs-modules.html#copy_string_contents */
+static bool
+copy_string_contents (emacs_env *env, emacs_value value,
+                      char **buffer, size_t *size)
+{
+  ptrdiff_t buffer_size;
+  if (!env->copy_string_contents (env, value, NULL, &buffer_size))
+    return false;
+  assert (env->non_local_exit_check (env) == emacs_funcall_exit_return);
+  assert (buffer_size > 0);
+  *buffer = malloc ((size_t) buffer_size);
+  if (*buffer == NULL) {
+    env->non_local_exit_signal (env, env->intern (env, "memory-full"),
+                                env->intern (env, "nil"));
+    return false;
+  }
+  ptrdiff_t old_buffer_size = buffer_size;
+  if (!env->copy_string_contents (env, value, *buffer, &buffer_size)) {
+    free (*buffer);
+    *buffer = NULL;
+    return false;
+  }
+  assert (env->non_local_exit_check (env) == emacs_funcall_exit_return);
+  assert (buffer_size == old_buffer_size);
+  *size = (size_t) (buffer_size - 1);
+  return true;
+}
+
 /* Always return symbol 't'.  */
 static emacs_value
 Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *data)
@@ -15,7 +44,7 @@ Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *d
   GdkPixbuf *pixbuf;
   gboolean alpha;
   int width, height, rowstride, bits_per_sample;
-  ptrdiff_t data_size = 0;
+  size_t data_size = 0;
   gchar *buffer = NULL;
   gsize newsize;
   emacs_value thedata, output;
@@ -29,9 +58,7 @@ Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *d
   thedata = args[5];
 
   /* Copy contents of the data to a buffer */
-  env->copy_string_contents (env, thedata, buffer, &data_size);
-  buffer = g_new (gchar, data_size);  
-  env->copy_string_contents (env, thedata, buffer, &data_size);
+  copy_string_contents (env, thedata, &buffer, &data_size);
 
   /* Get data into a pixbuf instance so we can convert to an image
      format Emacs understands. */
@@ -45,12 +72,12 @@ Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *d
                                      NULL, NULL); /* Memory manage stays with emacs */
   if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &newsize, "png", &error, NULL)) {
     g_object_unref (pixbuf);
-    g_free (buffer);
+    free (buffer);
     return env->intern (env, "nil");
   }
   output = env->make_string (env, buffer, data_size - 1);
   g_object_unref (pixbuf);
-  g_free (buffer);
+  free (buffer);
   return output;
 }
 
