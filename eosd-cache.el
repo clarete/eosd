@@ -24,8 +24,28 @@
 (defvar eosd-notification-list nil
   "The list of notifications to display.")
 
+(defvar eosd-notification-filter-time nil
+  "Expression applied to filter notifications by their timestamp.")
+
+(defvar eosd-notification-filter-text nil
+  "Expression applied to filter notifications by their text.")
+
 (defvar eosd-notification-filter nil
-  "Expression applied to filter which notifications to show.")
+  "Expression applied to filter which notifications to show.
+
+This is the variable that is actually used to filter
+notifications.  The current UI just concatenates the following
+variables to form the value for this variable:
+
+ * `eosd-notification-filter-time'
+ * `eosd-notification-filter-text'
+
+That's useful for composing UIs that want to give different
+options for each filter type.  Users that dislike the current UI
+can just come up with their own input system and either use the
+separate variables and assemble them together into this one or
+ignore the specific vars and just use this one.  Which is what
+the filter system actually uses.")
 
 (defvar eosd-notification-fields '(id timestamp app-name
   replaces-id app-icon summary body actions hints expire-timeout)
@@ -83,6 +103,24 @@ The return value will be the newly created notification."
         (delq (assoc (cons 'id notification-id)
                      eosd-notification-list)
               eosd-notification-list)))
+
+
+;; Filters
+
+(defun --eosd--seconds-ago (s)
+  "Time S seconds ago."
+  `(>= timestamp ,(- (float-time) s)))
+
+(defun eosd-cache-filter-by-time (time)
+  "Only show messages at most TIME old."
+  (setq eosd-notification-filter-time
+        (--eosd--seconds-ago
+         (pcase time
+           ('5m  (* 5 60))
+           ('1h  (* 60 60))
+           ('24h (* 60 60 24))
+           ('1w  (* 60 60 24 7))
+           ('1M  (* 60 60 24 7 4))))))
 
 (provide 'eosd-cache)
 ;;; eosd-cache.el ends here

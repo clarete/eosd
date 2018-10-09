@@ -19,6 +19,7 @@
 ;;
 ;;; Code:
 
+(require 'magit-popup)
 (require 'shr)
 (require 'eosd-cache)
 (require 'eosd-pixbuf)
@@ -62,6 +63,7 @@
 (defvar eosd-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'bury-buffer)
+    (define-key map (kbd "f") 'eosd-mode-popup-filter)
     (define-key map (kbd "g") 'eosd-mode-create-or-update-buffer)
     (define-key map (kbd "n") 'eosd-mode-next-notification)
     (define-key map (kbd "p") 'eosd-mode-previous-notification)
@@ -426,6 +428,36 @@ settings of the header."
                 (eosd-mode)
                 (switch-to-buffer b))))
       (eosd-mode-create-buffer)))
+
+(defun eosd-mode-filter-time (time)
+  "Only show messages at most TIME old."
+  (eosd-cache-filter-by-time time)
+  (eosd-mode-update-filters))
+
+(defun eosd-mode-update-filters ()
+  "Update `eosd-notification-filter' and `eosd-mode' buffer."
+  (setq eosd-notification-filter
+        `(,eosd-notification-filter-time))
+  (eosd-mode-create-or-update-buffer))
+
+(defmacro --eosd--timef (time)
+  "Interactive wrapper for eosd-mode-filter-time with TIME."
+  `(lambda () (interactive) (eosd-mode-filter-time ,time)))
+
+;;;;###autoload (autoload 'eosd-mode-filter-popup "magit" nil t)
+(magit-define-popup eosd-mode-popup-filter
+  "Show popup buffer featuring filtering commands."
+  'eosd-popup-filter
+  :actions  `("Time"
+              (?5 "Last 5m"    ,(--eosd--timef '5m))
+              (?h "Last hour"  ,(--eosd--timef '1h))
+              (?d "Last 24h"   ,(--eosd--timef '24h))
+              (?w "Last Week"  ,(--eosd--timef '1w))
+              (?m "Last Month" ,(--eosd--timef '1M))
+
+              "Text"
+              (?a "Application" #'eosd-mode-filter-app)
+              (?m "Message"     #'eosd-mode-filter-message)))
 
 (provide 'eosd-mode)
 ;;; eosd-mode.el ends here
