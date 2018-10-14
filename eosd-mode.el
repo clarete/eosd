@@ -224,12 +224,10 @@ To change the configured text mark, refer to the variable
 
 (defun eosd-mode-parse-icon-data (data)
   "Parse icon within DATA."
-  (cl-destructuring-bind (wi he rs alpha bps ch imgdata) data
+  (cl-destructuring-bind (w h rs alpha bps ch imgdata) data
     (let* ((al (if alpha 1 0))
-           (w (min wi 32))
-           (h (min he 32))
            (thedata0 (apply #'unibyte-string imgdata))
-           (thedata1 (eosd-pixbuf-to-png w h rs al bps thedata0))
+           (thedata1 (eosd-pixbuf-to-png w h rs al bps thedata0 48 48))
            (theimage (create-image thedata1 'png t)))
       (insert-image theimage))))
 

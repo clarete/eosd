@@ -38,7 +38,7 @@ copy_string_contents (emacs_env *env, emacs_value value,
 
 struct pixbuf_data {
   gboolean alpha;
-  int width, height, rowstride, bits_per_sample;
+  int width, height, rowstride, bits_per_sample, new_width, new_height;
   emacs_value data_lispo;
   size_t data_size;
   gchar *data_buffer;
@@ -56,6 +56,12 @@ static bool _read_parameters (struct pixbuf_data *pbdata,
   pbdata->bits_per_sample = env->extract_integer (env, args[4]);
   pbdata->data_lispo = args[5];
   pbdata->data_size = 0;
+  pbdata->new_width = 0;
+  pbdata->new_height = 0;
+  if (nargs > 6)
+    pbdata->new_width = env->extract_integer (env, args[6]);
+  if (nargs > 7)
+    pbdata->new_height = env->extract_integer (env, args[7]);
   return copy_string_contents (env,
                                pbdata->data_lispo,
                                &pbdata->data_buffer,
@@ -67,7 +73,7 @@ static emacs_value
 Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *data)
 {
   GError *error = NULL;
-  GdkPixbuf *pixbuf;
+  GdkPixbuf *pixbuf, *scaledpb;
   struct pixbuf_data pbdata;
   gsize newsize;
   emacs_value output;
@@ -87,6 +93,16 @@ Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *d
                                      pbdata.height,
                                      pbdata.rowstride,
                                      NULL, NULL); /* Memory manage stays with emacs */
+
+  /* Resize image if requested */
+  if (pbdata.new_width > 0 && pbdata.new_height > 0) {
+    scaledpb = gdk_pixbuf_scale_simple (pixbuf,
+                                        pbdata.new_width,
+                                        pbdata.new_height,
+                                        GDK_INTERP_BILINEAR);
+    g_object_unref (pixbuf);
+    pixbuf = scaledpb;
+  }
 
   /* Save the result into a memory buffer to be transformed to an
      emacs lisp object. */
@@ -146,7 +162,7 @@ emacs_module_init (struct emacs_runtime *ert)
   bind_function (env, lsym, \
 		 env->make_function (env, amin, amax, csym, doc, data))
 
-  _DEFUN ("eosd-pixbuf-to-png", Feosd_pixbuf_to_png, 6, 6, NULL, NULL);
+  _DEFUN ("eosd-pixbuf-to-png", Feosd_pixbuf_to_png, 6, 8, NULL, NULL);
 
   provide (env, "eosd-pixbuf");
   return 0;
