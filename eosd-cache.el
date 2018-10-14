@@ -68,16 +68,17 @@ the filter system actually uses.")
         notification
       nil)))
 
+(defun eosd-cache-do-filters (filters notification)
+  "Apply all FILTERS in NOTIFICATION."
+  (if (null filters)
+      notification
+    (if (eosd-cache-apply-filter notification (car filters))
+        (eosd-cache-do-filters (cdr filters) notification))))
+
 (defun eosd-cache-apply-filters (notification)
   "Apply all filters in NOTIFICATION."
-  (if (null eosd-notification-filter)
-      notification
-    (if (and (delq nil
-              (mapcar (lambda (filter)
-                        (eosd-cache-apply-filter notification filter))
-                      eosd-notification-filter)))
-        notification
-      nil)))
+  (eosd-cache-do-filters
+   (delq nil eosd-notification-filter) notification))
 
 (defun eosd-cache-filter (notifications)
   "Filter NOTIFICATIONS list."
