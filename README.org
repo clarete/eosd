@@ -9,6 +9,10 @@ This package teaches Emacs how to manage notifications received by
 other applications via a D-Bus service [[http://www.galago-project.org/specs/notification/0.9/index.html][standardized by the Free
 Desktop]] initiative.
 
+** Screenshot
+
+   [[./screenshot.jpg]]
+
 ** Features
 
    * [X] Central place to access all notifications received
@@ -28,6 +32,23 @@ Desktop]] initiative.
 
    Emacs OSD was tested with Emacs 24.5.1 but will probably work with
    any version compiled with D-Bus.
+
+** Basic Usage
+
+   To launch =EOSD=, assuming it's properly installed, just execute
+   =M-x eosd= and you'll be sent to the =EOSD Mode=. Use the following
+   key bindings in that mode:
+
+
+   | Key | Description                           |
+   |-----+---------------------------------------|
+   | =n= | Move to next notification             |
+   | =p= | Move to previous notification         |
+   | =g= | Reload notifications from cache       |
+   | =f= | Prompt the user with the filter popup |
+   | =i= | Toggle show/hide notification body    |
+   | =d= | Delete notification                   |
+   | =q= | Bury buffer                           |
 
 ** Alternatives
 
