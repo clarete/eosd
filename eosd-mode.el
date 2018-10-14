@@ -447,6 +447,7 @@ settings of the header."
   "Show popup buffer featuring filtering commands."
   'eosd-popup-filter
   :actions  `("Time"
+              (?1 "Last 1m"    ,(--eosd--timef '1m))
               (?5 "Last 5m"    ,(--eosd--timef '5m))
               (?h "Last hour"  ,(--eosd--timef '1h))
               (?d "Last 24h"   ,(--eosd--timef '24h))

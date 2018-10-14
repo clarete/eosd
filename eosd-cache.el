@@ -116,6 +116,7 @@ The return value will be the newly created notification."
   (setq eosd-notification-filter-time
         (--eosd--seconds-ago
          (pcase time
+           ('1m  60)
            ('5m  (* 5 60))
            ('1h  (* 60 60))
            ('24h (* 60 60 24))
