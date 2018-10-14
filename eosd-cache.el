@@ -27,6 +27,9 @@
 (defvar eosd-notification-filter-time nil
   "Expression applied to filter notifications by their timestamp.")
 
+(defvar eosd-notification-filter-app nil
+  "Expression applied to filter notifications by name of application that created them.")
+
 (defvar eosd-notification-filter-text nil
   "Expression applied to filter notifications by their text.")
 
@@ -122,6 +125,10 @@ The return value will be the newly created notification."
            ('24h (* 60 60 24))
            ('1w  (* 60 60 24 7))
            ('1M  (* 60 60 24 7 4))))))
+
+(defun eosd-cache-filter-by-app (appname)
+  "Only show messages from app APPNAME."
+  (setq eosd-notification-filter-app `(equal app-name ,appname)))
 
 (provide 'eosd-cache)
 ;;; eosd-cache.el ends here

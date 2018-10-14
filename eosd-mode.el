@@ -432,10 +432,16 @@ settings of the header."
   (eosd-cache-filter-by-time time)
   (eosd-mode-update-filters))
 
+(defun eosd-mode-filter-app (appname)
+  "Filter notifications by app that generated them with APPNAME."
+  (interactive "MFilter by application name: ")
+  (eosd-cache-filter-by-app appname)
+  (eosd-mode-update-filters))
+
 (defun eosd-mode-update-filters ()
   "Update `eosd-notification-filter' and `eosd-mode' buffer."
-  (setq eosd-notification-filter
-        `(,eosd-notification-filter-time))
+  (setq eosd-notification-filter `(,eosd-notification-filter-time
+                                   ,eosd-notification-filter-app))
   (eosd-mode-create-or-update-buffer))
 
 (defmacro --eosd--timef (time)
@@ -455,7 +461,7 @@ settings of the header."
               (?m "Last Month" ,(--eosd--timef '1M))
 
               "Text"
-              (?a "Application" #'eosd-mode-filter-app)
+              (?a "Application" eosd-mode-filter-app)
               (?m "Message"     #'eosd-mode-filter-message)))
 
 (provide 'eosd-mode)
