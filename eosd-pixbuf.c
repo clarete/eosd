@@ -36,48 +36,79 @@ copy_string_contents (emacs_env *env, emacs_value value,
   return true;
 }
 
+struct pixbuf_data {
+  gboolean alpha;
+  int width, height, rowstride, bits_per_sample;
+  emacs_value data_lispo;
+  size_t data_size;
+  gchar *data_buffer;
+};
+
+static bool _read_parameters (struct pixbuf_data *pbdata,
+                              ptrdiff_t nargs,
+                              emacs_value *args,
+                              emacs_env *env)
+{
+  pbdata->width = env->extract_integer (env, args[0]);
+  pbdata->height = env->extract_integer (env, args[1]);
+  pbdata->rowstride = env->extract_integer (env, args[2]);
+  pbdata->alpha = env->extract_integer (env, args[3]) == 1;
+  pbdata->bits_per_sample = env->extract_integer (env, args[4]);
+  pbdata->data_lispo = args[5];
+  pbdata->data_size = 0;
+  return copy_string_contents (env,
+                               pbdata->data_lispo,
+                               &pbdata->data_buffer,
+                               &pbdata->data_size);
+}
+
 /* Always return symbol 't'.  */
 static emacs_value
 Feosd_pixbuf_to_png (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *data)
 {
   GError *error = NULL;
   GdkPixbuf *pixbuf;
-  gboolean alpha;
-  int width, height, rowstride, bits_per_sample;
-  size_t data_size = 0;
-  gchar *buffer = NULL;
+  struct pixbuf_data pbdata;
   gsize newsize;
-  emacs_value thedata, output;
+  emacs_value output;
 
-  /* Read parameter list */
-  width = env->extract_integer (env, args[0]);
-  height = env->extract_integer (env, args[1]);
-  rowstride = env->extract_integer (env, args[2]);
-  alpha = env->extract_integer (env, args[3]) == 1;
-  bits_per_sample = env->extract_integer (env, args[4]);
-  thedata = args[5];
-
-  /* Copy contents of the data to a buffer */
-  copy_string_contents (env, thedata, &buffer, &data_size);
+  if (!_read_parameters (&pbdata, nargs, args, env)) {
+    /* Should probably find a better way to signal an error */
+    return env->intern (env, "nil");
+  }
 
   /* Get data into a pixbuf instance so we can convert to an image
      format Emacs understands. */
-  pixbuf = gdk_pixbuf_new_from_data ((guchar *) buffer,
+  pixbuf = gdk_pixbuf_new_from_data ((guchar *) pbdata.data_buffer,
                                      GDK_COLORSPACE_RGB,
-                                     alpha,
-                                     bits_per_sample,
-                                     width,
-                                     height,
-                                     rowstride,
+                                     pbdata.alpha,
+                                     pbdata.bits_per_sample,
+                                     pbdata.width,
+                                     pbdata.height,
+                                     pbdata.rowstride,
                                      NULL, NULL); /* Memory manage stays with emacs */
-  if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &newsize, "png", &error, NULL)) {
+
+  /* Save the result into a memory buffer to be transformed to an
+     emacs lisp object. */
+  if (!gdk_pixbuf_save_to_buffer (pixbuf,
+                                  &pbdata.data_buffer,
+                                  &newsize,
+                                  "png",
+                                  &error,
+                                  NULL)) {
     g_object_unref (pixbuf);
-    free (buffer);
+    free (pbdata.data_buffer);
+    g_error_free (error);
+    /* Should probably find a better way to signal an error */
     return env->intern (env, "nil");
   }
-  output = env->make_string (env, buffer, data_size - 1);
+
+  /* Work with Gdk pixbuf is finally done. Get it into an emacs string
+     and dispose both gobject instance and temporary buffer where
+     image data was read into. */
+  output = env->make_string (env, pbdata.data_buffer, pbdata.data_size - 1);
   g_object_unref (pixbuf);
-  free (buffer);
+  free (pbdata.data_buffer);
   return output;
 }
 
