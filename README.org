@@ -33,6 +33,27 @@ Desktop]] initiative.
    Emacs OSD was tested with Emacs 24.5.1 but will probably work with
    any version compiled with D-Bus.
 
+** Installation
+
+  Install Emacs development headers, for example on Fedora:
+
+  #+BEGIN_SRC
+  dnf install emacs-devel
+  #+END_SRC
+
+  Build =eosd-pixbuf.so= library:
+
+  #+BEGIN_SRC
+  make
+  #+END_SRC
+
+  Enable the package in Emacs
+
+  #+BEGIN_SRC emacs-lisp
+  (use-package eosd
+    :load-path "/path/to/the/eosd/")
+  #+END_SRC
+
 ** Basic Usage
 
    To launch =EOSD=, assuming it's properly installed, just execute
